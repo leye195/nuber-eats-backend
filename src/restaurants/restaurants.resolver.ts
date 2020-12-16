@@ -2,7 +2,7 @@ import { Resolver, Query, Args, Mutation } from '@nestjs/graphql';
 import { CreateRestaurantDTO } from './dtos/createRestaurant.dto';
 import { Restaurant } from './entities/restaurant.entity';
 
-@Resolver()
+@Resolver(() => Restaurant)
 // Restaurant의 Resolver라는 것을 알림
 export class RestaurantResolver {
   @Query(() => [Restaurant])
