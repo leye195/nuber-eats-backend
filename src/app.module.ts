@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { GraphQLModule } from '@nestjs/graphql';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import * as Joi from 'joi';
+import { Restaurant } from './restaurants/entities/restaurant.entity';
 import { RestaurantsModule } from './restaurants/restaurants.module';
 
 @Module({
@@ -27,8 +28,9 @@ import { RestaurantsModule } from './restaurants/restaurants.module';
       username: process.env.DB_USER,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
-      synchronize: true, // typeorm이 DB에 연결 할 때, DB를 모듈의 현재 상태로 마이그레이션 한다는 의미
+      synchronize: process.env.NODE_ENV !== 'prod', // typeorm이 DB에 연결 할 때, DB를 모듈의 현재 상태로 마이그레이션 한다는 의미
       logging: true, // DB에 발생하는 일은 logging
+      entities: [Restaurant],
     }),
     GraphQLModule.forRoot({
       // root module로 설정
