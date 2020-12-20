@@ -10,11 +10,11 @@ export class CoreEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Field(() => String)
+  @Field(() => Date)
   @CreateDateColumn()
   createdAt: Date;
 
-  @Field(() => String)
+  @Field(() => Date)
   @UpdateDateColumn()
   updatedAt: Date;
 }
