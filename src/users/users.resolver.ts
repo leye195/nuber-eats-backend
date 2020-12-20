@@ -28,7 +28,7 @@ export class UsersResolver {
           error,
         };
       }
-      return { ok: true, error: '' };
+      return { ok: true };
     } catch (e) {
       console.log(e);
       return { ok: false, error: e };
