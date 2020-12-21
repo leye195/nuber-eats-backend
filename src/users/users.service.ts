@@ -15,19 +15,20 @@ export class UsersService {
     email,
     password,
     role,
-  }: CreateAccountInPut): Promise<string | undefined> {
+  }: CreateAccountInPut): Promise<{ ok: boolean; error?: string }> {
     // check new user
     try {
       const exists = await this.users.findOne({ email });
       if (exists) {
         // make error
-        return 'There is a user with that email already';
+        return { ok: false, error: 'There is a user with that email already' };
       }
       await this.users.save(this.users.create({ email, password, role }));
+      return { ok: true };
     } catch (e) {
       // make error
       console.log(e);
-      return 'Could not create account';
+      return { ok: false, error: 'Could not create account' };
     }
     // hash the password
     // return ok or error
