@@ -6,6 +6,7 @@ import {
   CreateAccountInPut,
   CreateAccountOutPut,
 } from './dtos/createAccount.dto';
+import { DeleteProfileOutput } from './dtos/delete-profile.dto';
 import { EditProfileInput, EditProfileOutput } from './dtos/edit-profile.dto';
 import { LoginInput, LoginOutPut } from './dtos/login.dto';
 import { UserProfileInput, UserProfileOutput } from './dtos/user-profile.dto';
@@ -27,6 +28,7 @@ export class UsersResolver {
     createAccountInput: CreateAccountInPut,
   ): Promise<CreateAccountOutPut> {
     try {
+      console.log(createAccountInput);
       return this.usersService.createAccount(createAccountInput);
     } catch (e) {
       console.log(e);
@@ -65,8 +67,25 @@ export class UsersResolver {
     @Args('input') editProfileInput: EditProfileInput,
   ): Promise<EditProfileOutput> {
     try {
+      console.log(user);
       await this.usersService.editProfile(user.id, editProfileInput);
       return { ok: true };
+    } catch (e) {
+      return {
+        ok: false,
+        error: e,
+      };
+    }
+  }
+
+  @Mutation(() => DeleteProfileOutput)
+  @UseGuards(AuthGuard)
+  async deleteProfile(@AuthUser() user): Promise<DeleteProfileOutput> {
+    try {
+      await this.usersService.deleteProfile(user.id, user.email);
+      return {
+        ok: true,
+      };
     } catch (e) {
       return {
         ok: false,

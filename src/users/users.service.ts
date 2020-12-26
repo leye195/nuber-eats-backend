@@ -90,6 +90,10 @@ export class UsersService {
     if (password) {
       user.password = password;
     }
-    return this.users.save(user); //update(userId, { ...editProfileInput });
+    return this.users.save(user);
+  }
+
+  async deleteProfile(id: number, email: string) {
+    return this.users.delete({ id, email });
   }
 }
