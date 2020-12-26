@@ -17,4 +17,5 @@ The Backend of Nuber Eats Clone
 - Log In
 - See Profile
 - Edit Profile
+- Delete Profile
 - Verify Email
