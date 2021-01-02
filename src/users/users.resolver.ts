@@ -10,6 +10,7 @@ import { DeleteProfileOutput } from './dtos/delete-profile.dto';
 import { EditProfileInput, EditProfileOutput } from './dtos/edit-profile.dto';
 import { LoginInput, LoginOutPut } from './dtos/login.dto';
 import { UserProfileInput, UserProfileOutput } from './dtos/user-profile.dto';
+import { VerifyEmailInput, VerifyEmailOutput } from './dtos/verify-email.dto';
 import { User } from './entities/user.entity';
 import { UsersService } from './users.service';
 
@@ -67,7 +68,6 @@ export class UsersResolver {
     @Args('input') editProfileInput: EditProfileInput,
   ): Promise<EditProfileOutput> {
     try {
-      console.log(user);
       await this.usersService.editProfile(user.id, editProfileInput);
       return { ok: true };
     } catch (e) {
@@ -83,6 +83,23 @@ export class UsersResolver {
   async deleteProfile(@AuthUser() user): Promise<DeleteProfileOutput> {
     try {
       await this.usersService.deleteProfile(user.id, user.email);
+      return {
+        ok: true,
+      };
+    } catch (e) {
+      return {
+        ok: false,
+        error: e,
+      };
+    }
+  }
+
+  @Mutation(() => VerifyEmailOutput)
+  async verifyEmail(
+    @Args('input') verifyEmailInput: VerifyEmailInput,
+  ): Promise<VerifyEmailOutput> {
+    try {
+      await this.usersService.verifyEmail(verifyEmailInput);
       return {
         ok: true,
       };
