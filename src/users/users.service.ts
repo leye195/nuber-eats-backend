@@ -4,11 +4,13 @@ import { Repository } from 'typeorm';
 import { CreateAccountInPut } from './dtos/createAccount.dto';
 import { LoginInput } from './dtos/login.dto';
 import { UserProfileOutput } from './dtos/user-profile.dto';
-import { EditProfileInput } from './dtos/edit-profile.dto';
-import { VerifyEmailInput } from './dtos/verify-email.dto';
+import { EditProfileInput, EditProfileOutput } from './dtos/edit-profile.dto';
+import { VerifyEmailInput, VerifyEmailOutput } from './dtos/verify-email.dto';
 import { User } from './entities/user.entity';
 import { Verification } from './entities/verification.entity';
 import { JwtService } from 'src/jwt/jwt.service';
+import { DeleteProfileOutput } from './dtos/delete-profile.dto';
+import { MailService } from 'src/mail/mail.service';
 
 @Injectable()
 export class UsersService {
@@ -18,6 +20,7 @@ export class UsersService {
     @InjectRepository(Verification)
     private readonly verifications: Repository<Verification>,
     private readonly jwtService: JwtService,
+    private readonly mailService: MailService,
   ) {}
 
   async createAccount({
@@ -36,11 +39,12 @@ export class UsersService {
       const user = await this.users.save(
         this.users.create({ email, password, role }),
       );
-      await this.verifications.save(
+      const verification = await this.verifications.save(
         this.verifications.create({
           user,
         }),
       );
+      this.mailService.sendVerificationEmail(user.email, verification.code);
       return { ok: true };
     } catch (e) {
       // make error
@@ -99,28 +103,51 @@ export class UsersService {
   async editProfile(
     userId: number,
     { email, password }: EditProfileInput,
-  ): Promise<User> {
-    const user = await this.users.findOne(userId);
-    if (email) {
-      user.email = email;
-      user.emailVerified = false;
-      await this.verifications.save(
-        this.verifications.create({
-          user,
-        }),
-      );
+  ): Promise<EditProfileOutput> {
+    try {
+      const user = await this.users.findOne(userId);
+      if (email) {
+        user.email = email;
+        user.emailVerified = false;
+        const verification = await this.verifications.save(
+          this.verifications.create({
+            user,
+          }),
+        );
+        this.mailService.sendVerificationEmail(user.email, verification.code);
+      }
+      if (password) {
+        user.password = password;
+      }
+      await this.users.save(user);
+      return {
+        ok: true,
+      };
+    } catch (e) {
+      console.log(e);
+      return {
+        ok: false,
+        error: e,
+      };
     }
-    if (password) {
-      user.password = password;
-    }
-    return this.users.save(user);
   }
 
-  async deleteProfile(id: number, email: string) {
-    return this.users.delete({ id, email });
+  async deleteProfile(id: number, email: string): Promise<DeleteProfileOutput> {
+    try {
+      await this.users.delete({ id, email });
+      return {
+        ok: true,
+      };
+    } catch (e) {
+      console.log(e);
+      return {
+        ok: false,
+        error: e,
+      };
+    }
   }
 
-  async verifyEmail({ code }: VerifyEmailInput): Promise<boolean> {
+  async verifyEmail({ code }: VerifyEmailInput): Promise<VerifyEmailOutput> {
     try {
       const verification = await this.verifications.findOne(
         { code },
@@ -128,13 +155,22 @@ export class UsersService {
       );
       if (verification) {
         verification.user.emailVerified = true;
-        this.users.save(verification.user);
-        return true;
+        await this.users.save(verification.user);
+        await this.verifications.delete(verification.id);
+        return {
+          ok: true,
+        };
       }
-      throw new Error();
+      return {
+        ok: false,
+        error: 'Verification not found.',
+      };
     } catch (e) {
       console.log(e);
-      return false;
+      return {
+        ok: false,
+        error: e,
+      };
     }
   }
 }

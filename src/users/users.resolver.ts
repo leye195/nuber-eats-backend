@@ -28,23 +28,12 @@ export class UsersResolver {
     @Args('input')
     createAccountInput: CreateAccountInPut,
   ): Promise<CreateAccountOutPut> {
-    try {
-      console.log(createAccountInput);
-      return this.usersService.createAccount(createAccountInput);
-    } catch (e) {
-      console.log(e);
-      return { ok: false, error: e };
-    }
+    return this.usersService.createAccount(createAccountInput);
   }
 
   @Mutation(() => LoginOutPut)
   async login(@Args('input') loginInput: LoginInput): Promise<LoginOutPut> {
-    try {
-      return this.usersService.login(loginInput);
-    } catch (e) {
-      console.log(e);
-      return { ok: false, error: e };
-    }
+    return this.usersService.login(loginInput);
   }
 
   @Query(() => User)
@@ -67,47 +56,19 @@ export class UsersResolver {
     @AuthUser() user,
     @Args('input') editProfileInput: EditProfileInput,
   ): Promise<EditProfileOutput> {
-    try {
-      await this.usersService.editProfile(user.id, editProfileInput);
-      return { ok: true };
-    } catch (e) {
-      return {
-        ok: false,
-        error: e,
-      };
-    }
+    return this.usersService.editProfile(user.id, editProfileInput);
   }
 
   @Mutation(() => DeleteProfileOutput)
   @UseGuards(AuthGuard)
   async deleteProfile(@AuthUser() user): Promise<DeleteProfileOutput> {
-    try {
-      await this.usersService.deleteProfile(user.id, user.email);
-      return {
-        ok: true,
-      };
-    } catch (e) {
-      return {
-        ok: false,
-        error: e,
-      };
-    }
+    return await this.usersService.deleteProfile(user.id, user.email);
   }
 
   @Mutation(() => VerifyEmailOutput)
   async verifyEmail(
     @Args('input') verifyEmailInput: VerifyEmailInput,
   ): Promise<VerifyEmailOutput> {
-    try {
-      await this.usersService.verifyEmail(verifyEmailInput);
-      return {
-        ok: true,
-      };
-    } catch (e) {
-      return {
-        ok: false,
-        error: e,
-      };
-    }
+    return this.usersService.verifyEmail(verifyEmailInput);
   }
 }
