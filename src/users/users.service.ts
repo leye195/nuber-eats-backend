@@ -48,7 +48,7 @@ export class UsersService {
       return { ok: true };
     } catch (e) {
       // make error
-      console.log(e);
+      // console.log(e);
       return { ok: false, error: 'Could not create account' };
     }
     // hash the password
@@ -83,7 +83,7 @@ export class UsersService {
       const token = this.jwtService.sign({ id: user.id });
       return { ok: true, token };
     } catch (e) {
-      console.log(e);
+      // console.log(e);
       return { ok: false, error: 'Could not login' };
     }
   }
@@ -124,7 +124,6 @@ export class UsersService {
         ok: true,
       };
     } catch (e) {
-      console.log(e);
       return {
         ok: false,
         error: e,
