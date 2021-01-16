@@ -1,5 +1,6 @@
 import { Test } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import { async } from 'rxjs';
 import { JwtService } from 'src/jwt/jwt.service';
 import { MailService } from 'src/mail/mail.service';
 import { Repository } from 'typeorm';
@@ -207,7 +208,7 @@ describe('UserService', () => {
       email: 'testatata@tes.co',
     };
 
-    it('should return user', async () => {
+    it('should return a user', async () => {
       usersRepository.findOneOrFail.mockResolvedValue(mockedUser);
 
       const result = await service.findById(1);
@@ -230,6 +231,57 @@ describe('UserService', () => {
   });
 
   describe('editProfile', () => {
+    const verificationArgs = {
+      code: 'code',
+    };
+    const editProfileArgs = {
+      userId: 1,
+      input: { email: 'tesatata@new.co' },
+    };
+    const oldUser = {
+      id: 1,
+      email: 'testatata@tes.co',
+      emailVerified: true,
+    };
+    const newUser = {
+      id: 1,
+      email: editProfileArgs.input.email,
+      emailVerified: false,
+    };
+
+    it('should edit email', async () => {
+      usersRepository.findOne.mockResolvedValue(oldUser);
+      verificationRepository.create.mockReturnValue(verificationArgs);
+      verificationRepository.save.mockReturnValue(verificationArgs);
+
+      const result = await service.editProfile(
+        editProfileArgs.userId,
+        editProfileArgs.input,
+      );
+
+      expect(usersRepository.findOne).toHaveBeenCalledTimes(1);
+      expect(usersRepository.findOne).toHaveBeenCalledWith(
+        editProfileArgs.userId,
+      );
+
+      expect(verificationRepository.create).toHaveBeenCalledTimes(1);
+      expect(verificationRepository.create).toHaveBeenCalledWith({
+        user: newUser,
+      });
+
+      expect(verificationRepository.save).toHaveBeenCalledTimes(1);
+      expect(verificationRepository.save).toHaveBeenCalledWith(
+        verificationArgs,
+      );
+
+      expect(mailService.sendVerificationEmail).toHaveBeenCalledWith(
+        newUser.email,
+        verificationArgs.code,
+      );
+
+      expect(result).toMatchObject({ ok: true });
+    });
+
     it('should fail if there is an exception', async () => {
       usersRepository.findOne.mockRejectedValue(new Error('error'));
       const result = await service.editProfile(
@@ -243,7 +295,35 @@ describe('UserService', () => {
       });
     });
   });
+  it.todo('deleteProfile');
+  describe('deleteProfile', () => {
+    const deleteProfileArgs = {
+      id: 1,
+      email: 't@t.com',
+    };
+    it('should delete a user', async () => {
+      usersRepository.delete.mockResolvedValue(true);
+      const result = await service.deleteProfile(
+        deleteProfileArgs.id,
+        deleteProfileArgs.email,
+      );
+
+      expect(result).toMatchObject({ ok: true });
+    });
+
+    it('should fail if there is an exception', async () => {
+      usersRepository.delete.mockRejectedValue(new Error('error'));
+      const result = await service.deleteProfile(
+        deleteProfileArgs.id,
+        deleteProfileArgs.email,
+      );
+
+      expect(result).toMatchObject({
+        ok: false,
+        error: new Error('error'),
+      });
+    });
+  });
 
   it.todo('verifyEmail');
-  it.todo('deleteProfile');
 });
