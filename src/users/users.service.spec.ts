@@ -1,6 +1,5 @@
 import { Test } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { async } from 'rxjs';
 import { JwtService } from 'src/jwt/jwt.service';
 import { MailService } from 'src/mail/mail.service';
 import { Repository } from 'typeorm';
@@ -135,6 +134,7 @@ describe('UserService', () => {
       });
     });
   });
+
   describe('login', () => {
     const loginArgs = {
       email: 't@t.com',
@@ -283,9 +283,6 @@ describe('UserService', () => {
     });
 
     it('should edit user password', async () => {
-      const verificationArgs = {
-        code: 'code',
-      };
       const editProfileArgs = {
         userId: 1,
         input: { password: '01010' },
@@ -293,6 +290,7 @@ describe('UserService', () => {
       const oldUser = {
         id: 1,
         email: 'testatata@tes.co',
+        password: 'old',
         emailVerified: true,
       };
       const newUser = {
@@ -327,7 +325,7 @@ describe('UserService', () => {
       });
     });
   });
-  it.todo('deleteProfile');
+
   describe('deleteProfile', () => {
     const deleteProfileArgs = {
       id: 1,
@@ -357,7 +355,6 @@ describe('UserService', () => {
     });
   });
 
-  it.todo('verifyEmail');
   describe('verifyEmail', () => {
     const verifyEmailArgs = {
       code: 'code',
@@ -375,7 +372,6 @@ describe('UserService', () => {
 
     it('should verify email', async () => {
       verificationRepository.findOne.mockResolvedValue(verification);
-      usersRepository.save.mockResolvedValue(verification.user);
 
       const result = await service.verifyEmail(verifyEmailArgs);
 
@@ -401,12 +397,6 @@ describe('UserService', () => {
       verificationRepository.findOne.mockResolvedValue(null);
 
       const result = await service.verifyEmail(verifyEmailArgs);
-
-      expect(verificationRepository.findOne).toHaveBeenCalledTimes(1);
-      expect(
-        verificationRepository.findOne,
-      ).toHaveBeenCalledWith(verifyEmailArgs, { relations: ['user'] });
-
       expect(result).toMatchObject({
         ok: false,
         error: 'Verification not found.',
@@ -419,7 +409,7 @@ describe('UserService', () => {
       const result = await service.verifyEmail(verifyEmailArgs);
       expect(result).toMatchObject({
         ok: false,
-        error: new Error('error'),
+        error: 'Could not verify email',
       });
     });
   });

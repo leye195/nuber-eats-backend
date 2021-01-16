@@ -168,7 +168,7 @@ export class UsersService {
       // console.log(e);
       return {
         ok: false,
-        error: e,
+        error: 'Could not verify email',
       };
     }
   }
