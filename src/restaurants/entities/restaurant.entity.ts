@@ -3,8 +3,9 @@ import { Column, Entity, ManyToOne } from 'typeorm';
 import { IsString, Length } from 'class-validator';
 import { CoreEntity } from 'src/common/entities/core.entity';
 import { Category } from './category.entity';
+import { User } from 'src/users/entities/user.entity';
 
-@InputType({ isAbstract: true })
+@InputType('RestaurantInputType', { isAbstract: true })
 @ObjectType() //자동으로 schema를 build 하기위해 사용하는 graphql decorator
 @Entity() //Entity for typeORM
 export class Restaurant extends CoreEntity {
@@ -24,7 +25,14 @@ export class Restaurant extends CoreEntity {
   @IsString()
   bgImage: string;
 
-  @Field(() => Category)
-  @ManyToOne(() => Category, (category) => category.restaurants)
+  @Field(() => Category, { nullable: true })
+  @ManyToOne(() => Category, (category) => category.restaurants, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
   category: Category;
+
+  @Field(() => User)
+  @ManyToOne(() => User, (user) => user.restaurants)
+  owner: User;
 }
