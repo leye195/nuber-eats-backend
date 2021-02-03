@@ -105,10 +105,19 @@ export class UsersService {
     { email, password }: EditProfileInput,
   ): Promise<EditProfileOutput> {
     try {
+      const isEmailExist = await this.users.findOne({ email });
       const user = await this.users.findOne(userId);
+      if (isEmailExist) {
+        return {
+          ok: false,
+          error: 'Email already in use',
+        };
+      }
+
       if (email) {
         user.email = email;
         user.emailVerified = false;
+        await this.verifications.delete({ user: { id: user.id } });
         const verification = await this.verifications.save(
           this.verifications.create({
             user,
@@ -126,7 +135,7 @@ export class UsersService {
     } catch (e) {
       return {
         ok: false,
-        error: e,
+        error: 'Could not update profile',
       };
     }
   }

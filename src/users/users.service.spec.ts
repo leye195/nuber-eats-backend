@@ -250,7 +250,8 @@ describe('UserService', () => {
         emailVerified: false,
       };
 
-      usersRepository.findOne.mockResolvedValue(oldUser);
+      usersRepository.findOne.mockResolvedValueOnce(null);
+      usersRepository.findOne.mockResolvedValueOnce(oldUser);
       verificationRepository.create.mockReturnValue(verificationArgs);
       verificationRepository.save.mockReturnValue(verificationArgs);
 
@@ -258,8 +259,8 @@ describe('UserService', () => {
         editProfileArgs.userId,
         editProfileArgs.input,
       );
-
-      expect(usersRepository.findOne).toHaveBeenCalledTimes(1);
+      console.log(result);
+      expect(usersRepository.findOne).toHaveBeenCalledTimes(2);
       expect(usersRepository.findOne).toHaveBeenCalledWith(
         editProfileArgs.userId,
       );
@@ -300,7 +301,8 @@ describe('UserService', () => {
         password: editProfileArgs.input.password,
       };
 
-      usersRepository.findOne.mockResolvedValue(oldUser);
+      usersRepository.findOne.mockResolvedValueOnce(null);
+      usersRepository.findOne.mockResolvedValueOnce(oldUser);
 
       const result = await service.editProfile(
         editProfileArgs.userId,
@@ -312,8 +314,32 @@ describe('UserService', () => {
       expect(result).toMatchObject({ ok: true });
     });
 
+    it('should fail if there is email already use', async () => {
+      const verificationArgs = {
+        code: 'code',
+      };
+      const oldUser = {
+        id: 1,
+        email: 'testatata@tes.co',
+        password: 'old',
+        emailVerified: true,
+      };
+      usersRepository.findOne.mockResolvedValue(oldUser);
+      verificationRepository.create.mockReturnValue(verificationArgs);
+      verificationRepository.save.mockReturnValue(verificationArgs);
+      const result = await service.editProfile(oldUser.id, {
+        email: oldUser.email,
+      });
+
+      expect(usersRepository.findOne).toHaveBeenCalledTimes(2);
+      expect(result).toMatchObject({
+        ok: false,
+        error: 'Email already in use',
+      });
+    });
+
     it('should fail if there is an exception', async () => {
-      usersRepository.findOne.mockRejectedValue(new Error('error'));
+      usersRepository.findOne.mockRejectedValue(new Error());
       const result = await service.editProfile(
         expect.any(String),
         expect.any(Object),
@@ -321,7 +347,7 @@ describe('UserService', () => {
 
       expect(result).toMatchObject({
         ok: false,
-        error: new Error('error'),
+        error: 'Could not update profile',
       });
     });
   });

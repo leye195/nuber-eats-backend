@@ -23,7 +23,7 @@ registerEnumType(UserRole, { name: 'UserRole' }); // add enum type on graphql
 @Entity() //Entity for typeORM
 export class User extends CoreEntity {
   @Field(() => String)
-  @Column()
+  @Column({ unique: true })
   @IsEmail()
   email: string;
 
