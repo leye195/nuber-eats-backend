@@ -19,3 +19,10 @@ The Backend of Nuber Eats Clone
 - Edit Profile
 - Delete Profile
 - Verify Email
+
+## Restaurant Entity
+
+- name
+- category
+- address
+- coverImage

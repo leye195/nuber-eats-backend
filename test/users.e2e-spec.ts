@@ -23,6 +23,11 @@ describe('UserModule  (e2e)', () => {
   let verificationRepository: Repository<Verification>;
   let code: string;
 
+  const baseTest = () => request(app.getHttpServer()).post(GRAPHQL_ENDPOINT);
+  const publicTest = (query: string) => baseTest().send({ query });
+  const privateTest = (query: string) =>
+    baseTest().set('x-token', jwtToken).send({ query });
+
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
@@ -45,22 +50,18 @@ describe('UserModule  (e2e)', () => {
   //it.todo('createAccount');
   describe('createAccount', () => {
     it('should create account', () => {
-      return request(app.getHttpServer())
-        .post(GRAPHQL_ENDPOINT)
-        .send({
-          query: `
-            mutation {
-              createAccount(input: {
-                email: "${EMAIL}",
-                password: "1234",
-                role: Owner
-              }) {
-                ok
-                error
-              }
-            }
-          `,
-        })
+      return publicTest(`
+        mutation {
+          createAccount(input: {
+            email: "${EMAIL}",
+            password: "1234",
+            role: Owner
+          }) {
+            ok
+            error
+          }
+        }
+      `)
         .expect(200)
         .expect((res) => {
           const {
@@ -76,10 +77,7 @@ describe('UserModule  (e2e)', () => {
     });
 
     it('should fail if account already exist', () => {
-      return request(app.getHttpServer())
-        .post(GRAPHQL_ENDPOINT)
-        .send({
-          query: `
+      return publicTest(`
             mutation {
               createAccount(input: {
                 email: "${EMAIL}",
@@ -89,8 +87,7 @@ describe('UserModule  (e2e)', () => {
                 ok
                 error
               }
-            }`,
-        })
+            }`)
         .expect(200)
         .expect((res) => {
           const {
@@ -100,7 +97,6 @@ describe('UserModule  (e2e)', () => {
               },
             },
           } = res;
-          console.log(res.body);
           expect(ok).toBe(false);
           expect(error).toBe('There is a user with that email already');
         });
@@ -109,10 +105,7 @@ describe('UserModule  (e2e)', () => {
   //it.todo('login');
   describe('login', () => {
     it('should return token', () => {
-      return request(app.getHttpServer())
-        .post(GRAPHQL_ENDPOINT)
-        .send({
-          query: `
+      return publicTest(`
            mutation {
             login(input:{
               email: "${EMAIL}",
@@ -123,8 +116,7 @@ describe('UserModule  (e2e)', () => {
               token
             }
           }   
-        `,
-        })
+        `)
         .expect(200)
         .expect((res) => {
           const {
@@ -142,10 +134,7 @@ describe('UserModule  (e2e)', () => {
     });
 
     it('should fail if user does not exist', () => {
-      return request(app.getHttpServer())
-        .post(GRAPHQL_ENDPOINT)
-        .send({
-          query: `
+      return publicTest(`
             mutation {
               login(input:{
                 email: "${EMAIL}.com",
@@ -156,8 +145,7 @@ describe('UserModule  (e2e)', () => {
                 token
               }
             }  
-          `,
-        })
+        `)
         .expect(200)
         .expect((res) => {
           const {
@@ -174,10 +162,7 @@ describe('UserModule  (e2e)', () => {
     });
 
     it('should fail with wrong password', () => {
-      return request(app.getHttpServer())
-        .post(GRAPHQL_ENDPOINT)
-        .send({
-          query: `
+      return publicTest(`
             mutation {
               login(input:{
                 email: "${EMAIL}",
@@ -188,8 +173,7 @@ describe('UserModule  (e2e)', () => {
                 token
               }
             }   
-          `,
-        })
+        `)
         .expect(200)
         .expect((res) => {
           const {
