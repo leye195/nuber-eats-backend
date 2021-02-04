@@ -80,7 +80,10 @@ export class UsersService {
           error: 'Wrong Password',
         };
       }
-      const token = this.jwtService.sign({ id: user.id });
+
+      const token = this.jwtService.sign({
+        id: user.id,
+      });
       return { ok: true, token };
     } catch (e) {
       // console.log(e);
