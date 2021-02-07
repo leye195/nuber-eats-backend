@@ -27,7 +27,6 @@ export class MailService {
       form.append('subject', subject);
       form.append('template', template);
       emailVars.forEach(({ key, value }) => form.append(`v:${key}`, value));
-
       await got.post(
         `https://api.mailgun.net/v3/${this.options.domain}/messages`,
         {
@@ -39,6 +38,7 @@ export class MailService {
           body: form,
         },
       );
+
       return true;
       // console.log(response.body);
     } catch (error) {

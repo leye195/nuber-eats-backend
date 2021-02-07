@@ -9,17 +9,22 @@ import { Restaurant } from './restaurant.entity';
 @Entity() //Entity for typeORM
 export class Category extends CoreEntity {
   @Field(() => String)
-  @Column()
+  @Column({ unique: true })
   @IsString()
   @Length(5, 10)
   name: string;
 
-  @Field(() => String)
-  @Column()
+  @Field(() => String, { nullable: true })
+  @Column({ nullable: true })
   @IsString()
-  coverImage: string;
+  coverImg: string;
 
   @OneToMany(() => Restaurant, (restaurant) => restaurant.category)
   @Field(() => [Restaurant])
   restaurants: Restaurant[];
+
+  @Field(() => String)
+  @Column({ unique: true })
+  @IsString()
+  slug: string;
 }
