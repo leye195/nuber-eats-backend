@@ -1,11 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import {
   CreateRestaurantInput,
   CreateRestaurantOutput,
 } from './dtos/createRestaurant.dto';
-import { Restaurant } from './entities/restaurant.entity';
+//import { Restaurant } from './entities/restaurant.entity';
 import { User } from 'src/users/entities/user.entity';
 import {
   EditRestaurantInput,
@@ -13,15 +11,35 @@ import {
 } from './dtos/editRestaurant.dto';
 import { CategoryRepository } from './repositories/category.repository';
 import { Category } from './entities/category.entity';
-import { DeleteRestaurantInput } from './dtos/deleteRestaurant.dto';
+import {
+  DeleteRestaurantInput,
+  DeleteRestaurantOutput,
+} from './dtos/deleteRestaurant.dto';
+import { RestaurantRepository } from './repositories/restaurant.repository';
+import { AllCategoriesOutput } from './dtos/all-categories.dto';
+import { AllRestaurantOutput } from './dtos/all-restaurants.dto';
 
 @Injectable()
 export class RestaurantService {
   constructor(
-    @InjectRepository(Restaurant) //Restaurant Entity를 Repository로 inject
-    private readonly restaurants: Repository<Restaurant>,
+    private readonly restaurants: RestaurantRepository,
     private readonly categories: CategoryRepository,
   ) {}
+
+  async allRestaurants(): Promise<AllRestaurantOutput> {
+    try {
+      const restaurants = await this.restaurants.find();
+      return {
+        ok: true,
+        restaurants,
+      };
+    } catch (e) {
+      return {
+        ok: false,
+        error: 'Could not load Restaurants',
+      };
+    }
+  }
 
   async createRestaurant(
     owner: User,
@@ -52,12 +70,9 @@ export class RestaurantService {
     editRestaurantInput: EditRestaurantInput,
   ): Promise<EditRestaurantOutput> {
     try {
-      const restaurant = await this.restaurants.findOne({
-        id: editRestaurantInput.restaurantId,
-      });
-
-      //check restaurant exist
-      if (!restaurant) {
+      const { restaurantId, name } = editRestaurantInput;
+      const isExist = await this.restaurants.checkExist(restaurantId);
+      if (!isExist) {
         return {
           ok: false,
           error: 'Restaurant not found',
@@ -65,18 +80,17 @@ export class RestaurantService {
       }
 
       //check owner
-      if (owner.id !== restaurant.ownerId) {
+      const isOwner = await this.restaurants.checkIsOwner(restaurantId, owner);
+      if (!isOwner) {
         return {
           ok: false,
           error: 'You can not edit a restaurant that you do not own',
         };
       }
 
-      const { restaurantId, categoryName } = editRestaurantInput;
-
       let category: Category = null;
-      if (categoryName) {
-        category = await this.categories.getOrCreate(categoryName);
+      if (name) {
+        category = await this.categories.getOrCreate(name);
       }
       await this.restaurants.save([
         {
@@ -96,13 +110,13 @@ export class RestaurantService {
     }
   }
 
-  async deleteRestaurant(owner: User, { restaurantId }: DeleteRestaurantInput) {
+  async deleteRestaurant(
+    owner: User,
+    { restaurantId }: DeleteRestaurantInput,
+  ): Promise<DeleteRestaurantOutput> {
     try {
-      const restaurant = await this.restaurants.findOne({
-        id: restaurantId,
-      });
-      //check restaurant exist
-      if (!restaurant) {
+      const isExist = await this.restaurants.checkExist(restaurantId);
+      if (!isExist) {
         return {
           ok: false,
           error: 'Restaurant not found',
@@ -110,7 +124,8 @@ export class RestaurantService {
       }
 
       //check owner
-      if (owner.id !== restaurant.ownerId) {
+      const isOwner = await this.restaurants.checkIsOwner(restaurantId, owner);
+      if (!isOwner) {
         return {
           ok: false,
           error: 'You can not delete a restaurant that you do not own',
@@ -126,5 +141,24 @@ export class RestaurantService {
         error: 'Could not delete Restaurant',
       };
     }
+  }
+
+  async allCategories(): Promise<AllCategoriesOutput> {
+    try {
+      const categories = await this.categories.find();
+      return {
+        ok: true,
+        categories,
+      };
+    } catch (e) {
+      return {
+        ok: false,
+        error: 'Could not load Categories',
+      };
+    }
+  }
+
+  countRestaurant(category: Category) {
+    return this.restaurants.count({ category });
   }
 }

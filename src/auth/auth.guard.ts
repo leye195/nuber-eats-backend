@@ -9,9 +9,9 @@ export class AuthGuard implements CanActivate {
     const roles = this.reflactor.get<AllowedRoles>(
       'roles',
       context.getHandler(),
-    );
-
+    ); //get metadata from reflactor class
     if (!roles) {
+      // public
       return true;
     }
 
