@@ -18,6 +18,7 @@ import {
 import { RestaurantRepository } from './repositories/restaurant.repository';
 import { AllCategoriesOutput } from './dtos/all-categories.dto';
 import { AllRestaurantOutput } from './dtos/all-restaurants.dto';
+import { CategoryInput, CategoryOutput } from './dtos/category.dto';
 
 @Injectable()
 export class RestaurantService {
@@ -28,7 +29,9 @@ export class RestaurantService {
 
   async allRestaurants(): Promise<AllRestaurantOutput> {
     try {
-      const restaurants = await this.restaurants.find();
+      const restaurants = await this.restaurants.find({
+        relations: ['category'],
+      });
       return {
         ok: true,
         restaurants,
@@ -154,6 +157,32 @@ export class RestaurantService {
       return {
         ok: false,
         error: 'Could not load Categories',
+      };
+    }
+  }
+
+  async findCategoryBySlug({ slug }: CategoryInput): Promise<CategoryOutput> {
+    try {
+      const category = await this.categories.findOne(
+        { slug },
+        {
+          relations: ['restaurants'],
+        },
+      );
+      if (!category) {
+        return {
+          ok: false,
+          error: 'Could not find Category',
+        };
+      }
+      return {
+        ok: true,
+        category,
+      };
+    } catch (e) {
+      return {
+        ok: false,
+        error: 'Could not load Category',
       };
     }
   }
