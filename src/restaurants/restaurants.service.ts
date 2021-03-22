@@ -17,7 +17,10 @@ import {
 } from './dtos/deleteRestaurant.dto';
 import { RestaurantRepository } from './repositories/restaurant.repository';
 import { AllCategoriesOutput } from './dtos/all-categories.dto';
-import { AllRestaurantOutput } from './dtos/all-restaurants.dto';
+import {
+  AllRestaurantsOutput,
+  AllRestaurantsInput,
+} from './dtos/all-restaurants.dto';
 import { CategoryInput, CategoryOutput } from './dtos/category.dto';
 
 @Injectable()
@@ -27,14 +30,19 @@ export class RestaurantService {
     private readonly categories: CategoryRepository,
   ) {}
 
-  async allRestaurants(): Promise<AllRestaurantOutput> {
+  async allRestaurants(
+    allRestaurantInput: AllRestaurantsInput,
+  ): Promise<AllRestaurantsOutput> {
     try {
-      const restaurants = await this.restaurants.find({
-        relations: ['category'],
+      const [restaurants, totalResults] = await this.restaurants.findAndCount({
+        take: 25,
+        skip: (allRestaurantInput.page - 1) * 25,
       });
       return {
         ok: true,
-        restaurants,
+        results: restaurants,
+        totalPages: Math.ceil(totalResults / 25),
+        totalResults,
       };
     } catch (e) {
       return {
@@ -161,7 +169,10 @@ export class RestaurantService {
     }
   }
 
-  async findCategoryBySlug({ slug }: CategoryInput): Promise<CategoryOutput> {
+  async findCategoryBySlug({
+    slug,
+    page,
+  }: CategoryInput): Promise<CategoryOutput> {
     try {
       const category = await this.categories.findOne(
         { slug },
@@ -175,9 +186,22 @@ export class RestaurantService {
           error: 'Could not find Category',
         };
       }
+
+      const restaurants = await this.restaurants.find({
+        where: {
+          category,
+        },
+        take: 25,
+        skip: 25 * (page - 1),
+      });
+
+      const totalResults = await this.countRestaurant(category);
       return {
         ok: true,
         category,
+        restaurants,
+        totalPages: Math.ceil(totalResults / 25),
+        totalResults,
       };
     } catch (e) {
       return {

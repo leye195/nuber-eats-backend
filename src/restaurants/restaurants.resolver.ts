@@ -11,7 +11,10 @@ import { Role } from 'src/auth/role.decorator';
 import { EditProfileOutput } from 'src/users/dtos/edit-profile.dto';
 import { User } from 'src/users/entities/user.entity';
 import { AllCategoriesOutput } from './dtos/all-categories.dto';
-import { AllRestaurantOutput } from './dtos/all-restaurants.dto';
+import {
+  AllRestaurantsOutput,
+  AllRestaurantsInput,
+} from './dtos/all-restaurants.dto';
 import { CategoryInput, CategoryOutput } from './dtos/category.dto';
 import {
   CreateRestaurantInput,
@@ -34,9 +37,11 @@ import { RestaurantService } from './restaurants.service';
 export class RestaurantResolver {
   constructor(private readonly restaurantService: RestaurantService) {}
 
-  @Query(() => AllRestaurantOutput)
-  async AllRestaurant(): Promise<AllCategoriesOutput> {
-    return this.restaurantService.allRestaurants();
+  @Query(() => AllRestaurantsOutput)
+  async AllRestaurant(
+    @Args('input') allRestaurantInput: AllRestaurantsInput,
+  ): Promise<AllRestaurantsOutput> {
+    return this.restaurantService.allRestaurants(allRestaurantInput);
   }
 
   @Mutation(() => CreateRestaurantOutput)
