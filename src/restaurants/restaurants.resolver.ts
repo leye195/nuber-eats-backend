@@ -28,6 +28,11 @@ import {
   EditRestaurantInput,
   EditRestaurantOutput,
 } from './dtos/editRestaurant.dto';
+import { RestaurantInput, RestaurantOutput } from './dtos/restaurant.dto';
+import {
+  SearchRestaurantInput,
+  SearchRestaurantOutput,
+} from './dtos/search-restaurant.dto';
 import { Category } from './entities/category.entity';
 import { Restaurant } from './entities/restaurant.entity';
 import { RestaurantService } from './restaurants.service';
@@ -38,7 +43,7 @@ export class RestaurantResolver {
   constructor(private readonly restaurantService: RestaurantService) {}
 
   @Query(() => AllRestaurantsOutput)
-  async AllRestaurant(
+  AllRestaurant(
     @Args('input') allRestaurantInput: AllRestaurantsInput,
   ): Promise<AllRestaurantsOutput> {
     return this.restaurantService.allRestaurants(allRestaurantInput);
@@ -46,7 +51,7 @@ export class RestaurantResolver {
 
   @Mutation(() => CreateRestaurantOutput)
   @Role(['Owner'])
-  async createRestaurant(
+  createRestaurant(
     @AuthUser() authUser: User,
     @Args('input') restaurant: CreateRestaurantInput,
   ): Promise<CreateRestaurantOutput> {
@@ -55,7 +60,7 @@ export class RestaurantResolver {
 
   @Mutation(() => EditProfileOutput)
   @Role(['Owner'])
-  async editRestaurant(
+  editRestaurant(
     @AuthUser() authUser: User,
     @Args('input') editRestaurantInput: EditRestaurantInput,
   ): Promise<EditRestaurantOutput> {
@@ -64,7 +69,7 @@ export class RestaurantResolver {
 
   @Mutation(() => DeleteRestaurantOutput)
   @Role(['Owner'])
-  async deleteRestaurant(
+  deleteRestaurant(
     @AuthUser() authUser: User,
     @Args('input') deleteRestaurantInput: DeleteRestaurantInput,
   ): Promise<DeleteRestaurantOutput> {
@@ -72,6 +77,20 @@ export class RestaurantResolver {
       authUser,
       deleteRestaurantInput,
     );
+  }
+
+  @Query(() => RestaurantOutput)
+  findRestaurantById(
+    @Args('input') restaurantInput: RestaurantInput,
+  ): Promise<RestaurantOutput> {
+    return this.restaurantService.findRestaurantById(restaurantInput);
+  }
+
+  @Query(() => SearchRestaurantOutput)
+  searchRestaurantByName(
+    @Args('input') searchRestaurantInput: SearchRestaurantInput,
+  ): Promise<SearchRestaurantOutput> {
+    return this.restaurantService.searchRestaurantByName(searchRestaurantInput);
   }
 }
 

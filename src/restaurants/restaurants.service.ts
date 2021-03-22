@@ -22,6 +22,12 @@ import {
   AllRestaurantsInput,
 } from './dtos/all-restaurants.dto';
 import { CategoryInput, CategoryOutput } from './dtos/category.dto';
+import { RestaurantInput, RestaurantOutput } from './dtos/restaurant.dto';
+import {
+  SearchRestaurantInput,
+  SearchRestaurantOutput,
+} from './dtos/search-restaurant.dto';
+import { Like } from 'typeorm';
 
 @Injectable()
 export class RestaurantService {
@@ -30,14 +36,14 @@ export class RestaurantService {
     private readonly categories: CategoryRepository,
   ) {}
 
-  async allRestaurants(
-    allRestaurantInput: AllRestaurantsInput,
-  ): Promise<AllRestaurantsOutput> {
+  async allRestaurants({
+    page,
+  }: AllRestaurantsInput): Promise<AllRestaurantsOutput> {
     try {
-      const [restaurants, totalResults] = await this.restaurants.findAndCount({
-        take: 25,
-        skip: (allRestaurantInput.page - 1) * 25,
-      });
+      const [restaurants, totalResults] = await this.restaurants.pagination(
+        page,
+        25,
+      );
       return {
         ok: true,
         results: restaurants,
@@ -48,6 +54,54 @@ export class RestaurantService {
       return {
         ok: false,
         error: 'Could not load Restaurants',
+      };
+    }
+  }
+
+  async findRestaurantById({ id }: RestaurantInput): Promise<RestaurantOutput> {
+    try {
+      const restaurant = await this.restaurants.findOne(id, {
+        relations: ['category'],
+      });
+      if (!restaurant) {
+        return {
+          ok: false,
+          error: 'Restaurant not found',
+        };
+      }
+      return {
+        ok: true,
+        restaurant,
+      };
+    } catch (e) {
+      return {
+        ok: false,
+        error: 'Could not load Restaurant',
+      };
+    }
+  }
+
+  async searchRestaurantByName({
+    query,
+    page,
+  }: SearchRestaurantInput): Promise<SearchRestaurantOutput> {
+    try {
+      const [restaurants, totalResults] = await this.restaurants.search(
+        query,
+        page,
+        25,
+      );
+
+      return {
+        ok: true,
+        restaurants,
+        totalResults,
+        totalPages: Math.ceil(totalResults / 25),
+      };
+    } catch (e) {
+      return {
+        ok: false,
+        error: 'Could not search Restaurant',
       };
     }
   }

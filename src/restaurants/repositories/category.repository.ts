@@ -17,4 +17,13 @@ export class CategoryRepository extends Repository<Category> {
     }
     return category;
   }
+
+  async pagination(page: number, take: number): Promise<[Category[], number]> {
+    const [categories, totalResults] = await this.findAndCount({
+      take,
+      skip: (page - 1) * take,
+    });
+
+    return [categories, totalResults];
+  }
 }
