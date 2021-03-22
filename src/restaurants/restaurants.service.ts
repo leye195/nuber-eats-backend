@@ -3,7 +3,6 @@ import {
   CreateRestaurantInput,
   CreateRestaurantOutput,
 } from './dtos/createRestaurant.dto';
-//import { Restaurant } from './entities/restaurant.entity';
 import { User } from 'src/users/entities/user.entity';
 import {
   EditRestaurantInput,
@@ -27,11 +26,16 @@ import {
   SearchRestaurantInput,
   SearchRestaurantOutput,
 } from './dtos/search-restaurant.dto';
-import { Like } from 'typeorm';
+import { CreateDishInput, CreateDishOutput } from './dtos/create-dish.dto';
+import { Repository } from 'typeorm';
+import { Dish } from './entities/dish.entity';
+import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
 export class RestaurantService {
   constructor(
+    @InjectRepository(Dish)
+    private readonly dishes: Repository<Dish>,
     private readonly restaurants: RestaurantRepository,
     private readonly categories: CategoryRepository,
   ) {}
@@ -61,7 +65,7 @@ export class RestaurantService {
   async findRestaurantById({ id }: RestaurantInput): Promise<RestaurantOutput> {
     try {
       const restaurant = await this.restaurants.findOne(id, {
-        relations: ['category'],
+        relations: ['category', 'menu'],
       });
       if (!restaurant) {
         return {
@@ -267,5 +271,46 @@ export class RestaurantService {
 
   countRestaurant(category: Category) {
     return this.restaurants.count({ category });
+  }
+
+  async createDish(
+    owner: User,
+    createDishinput: CreateDishInput,
+  ): Promise<CreateDishOutput> {
+    try {
+      const restaurant = await this.restaurants.findOne(
+        createDishinput.restaurantId,
+      );
+
+      if (!restaurant) {
+        return {
+          ok: false,
+          error: 'Restaurant not found',
+        };
+      }
+
+      if (owner.id !== restaurant.ownerId) {
+        return {
+          ok: false,
+          error: 'You can not do that',
+        };
+      }
+
+      await this.dishes.save(
+        this.dishes.create({
+          ...createDishinput,
+          restaurant,
+        }),
+      );
+
+      return {
+        ok: true,
+      };
+    } catch (e) {
+      return {
+        ok: false,
+        error: 'Could not create Dish',
+      };
+    }
   }
 }
